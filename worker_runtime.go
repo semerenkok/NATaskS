@@ -59,12 +59,18 @@ func (w *Worker) refreshConsumerForRun() (jetstream.Consumer, error) {
 }
 
 func (w *Worker) recoverConsumerForRun() (jetstream.Consumer, error) {
-	if err := ensureStream(w.js, w.cfg.config); err != nil {
+	if err := retryJetStreamManagement(func() error {
+		return ensureStream(w.js, w.cfg.config)
+	}); err != nil {
 		return nil, err
 	}
 
-	consumer, err := w.ensureConsumer()
-	if err != nil {
+	var consumer jetstream.Consumer
+	if err := retryJetStreamManagement(func() error {
+		var err error
+		consumer, err = w.ensureConsumer()
+		return err
+	}); err != nil {
 		return nil, err
 	}
 
@@ -157,6 +163,10 @@ func (w *Worker) isShutdownFetchError(ctx context.Context, err error) bool {
 func (w *Worker) isRecoverableFetchError(err error) bool {
 	if err == nil {
 		return false
+	}
+
+	if isTemporaryJetStreamError(err) {
+		return true
 	}
 
 	switch connectionStatus(w.jetStreamConn()) {

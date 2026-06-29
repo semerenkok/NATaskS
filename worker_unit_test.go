@@ -203,6 +203,40 @@ func TestWorkerHandleFetchResult(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestWorkerRecoverableFetchErrorIncludesTemporaryJetStreamErrors(t *testing.T) {
+	w := &Worker{}
+
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "stream offline",
+			err: &jetstream.APIError{
+				Code:        503,
+				ErrorCode:   10118,
+				Description: "stream is offline",
+			},
+		},
+		{
+			name: "jetstream not available",
+			err: &jetstream.APIError{
+				Code:        503,
+				ErrorCode:   10008,
+				Description: "JetStream system temporarily unavailable",
+			},
+		},
+		{name: "no responders", err: nats.ErrNoResponders},
+		{name: "consumer leadership changed", err: jetstream.ErrConsumerLeadershipChanged},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.True(t, w.isRecoverableFetchError(tt.err))
+		})
+	}
+}
+
 func TestIsReadyNilSafe(t *testing.T) {
 	var client *Client
 	var worker *Worker
