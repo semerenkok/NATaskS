@@ -45,7 +45,9 @@ func NewWorker(js jetstream.JetStream, queue string, opts ...WorkerOption) (*Wor
 		return nil, err
 	}
 
-	if err := ensureStream(js, cfg.config); err != nil {
+	if err := retryJetStreamManagement(func() error {
+		return ensureStream(js, cfg.config)
+	}); err != nil {
 		return nil, err
 	}
 
@@ -57,8 +59,12 @@ func NewWorker(js jetstream.JetStream, queue string, opts ...WorkerOption) (*Wor
 		handlers: make(map[string]Handler),
 	}
 
-	consumer, err := w.ensureConsumer()
-	if err != nil {
+	var consumer jetstream.Consumer
+	if err := retryJetStreamManagement(func() error {
+		var err error
+		consumer, err = w.ensureConsumer()
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	w.consumer = consumer

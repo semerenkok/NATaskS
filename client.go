@@ -34,7 +34,9 @@ func NewClient(js jetstream.JetStream, opts ...Option) (*Client, error) {
 		return nil, fmt.Errorf("natasks: nil jetstream context")
 	}
 
-	if err := ensureStream(js, cfg); err != nil {
+	if err := retryJetStreamManagement(func() error {
+		return ensureStream(js, cfg)
+	}); err != nil {
 		return nil, err
 	}
 
@@ -171,7 +173,9 @@ func (c *Client) ensureSchedulesEnabled() error {
 		return nil
 	}
 
-	if err := ensureStream(c.js, c.cfg); err != nil {
+	if err := retryJetStreamManagement(func() error {
+		return ensureStream(c.js, c.cfg)
+	}); err != nil {
 		return err
 	}
 
