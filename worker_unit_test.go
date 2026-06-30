@@ -203,6 +203,16 @@ func TestWorkerHandleFetchResult(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestWorkerHandleFetchResultTemporaryJetStreamErrorDoesNotRecoverConsumer(t *testing.T) {
+	w := &Worker{cfg: workerConfig{idleWait: 0}}
+
+	nextConsumer, stop, err := w.handleFetchResult(context.Background(), nats.ErrNoResponders)
+
+	require.Nil(t, nextConsumer)
+	require.False(t, stop)
+	require.NoError(t, err)
+}
+
 func TestWorkerRecoverableFetchErrorIncludesTemporaryJetStreamErrors(t *testing.T) {
 	w := &Worker{}
 
