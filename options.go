@@ -20,6 +20,7 @@ const (
 type config struct {
 	streamName         string
 	subjectPrefix      string
+	autoCreateStream   bool
 	dispatchMiddleware []DispatchMiddleware
 	propagator         MessagePropagator
 }
@@ -44,8 +45,9 @@ type workerConfig struct {
 
 func defaultConfig() config {
 	return config{
-		streamName:    defaultStreamName,
-		subjectPrefix: defaultSubjectPrefix,
+		streamName:       defaultStreamName,
+		subjectPrefix:    defaultSubjectPrefix,
+		autoCreateStream: true,
 	}
 }
 
@@ -210,6 +212,13 @@ func WithStreamName(name string) SharedOption {
 func WithSubjectPrefix(prefix string) SharedOption {
 	return optionFunc(func(cfg *config) {
 		cfg.subjectPrefix = prefix
+	})
+}
+
+// WithStreamAutoCreate controls whether missing JetStream streams are created automatically.
+func WithStreamAutoCreate(enabled bool) SharedOption {
+	return optionFunc(func(cfg *config) {
+		cfg.autoCreateStream = enabled
 	})
 }
 

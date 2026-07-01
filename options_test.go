@@ -12,10 +12,12 @@ func TestCollectConfigAppliesOptions(t *testing.T) {
 		WithStreamName("APP"),
 		nil,
 		WithSubjectPrefix("app.tasks"),
+		WithStreamAutoCreate(false),
 	})
 	require.NoError(t, err)
 	require.Equal(t, "APP", cfg.streamName)
 	require.Equal(t, "app.tasks", cfg.subjectPrefix)
+	require.False(t, cfg.autoCreateStream)
 }
 
 func TestConfigValidate(t *testing.T) {
@@ -39,6 +41,7 @@ func TestCollectWorkerConfigAppliesOptions(t *testing.T) {
 	cfg, err := collectWorkerConfig([]WorkerOption{
 		WithStreamName("APP"),
 		WithSubjectPrefix("app.tasks"),
+		WithStreamAutoCreate(false),
 		WithConsumerPrefix("worker"),
 		WithDurable("jobs"),
 		WithConcurrency(4),
@@ -57,6 +60,7 @@ func TestCollectWorkerConfigAppliesOptions(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "APP", cfg.streamName)
 	require.Equal(t, "app.tasks", cfg.subjectPrefix)
+	require.False(t, cfg.autoCreateStream)
 	require.Equal(t, "worker", cfg.consumerPrefix)
 	require.Equal(t, "jobs", cfg.durable)
 	require.Equal(t, 4, cfg.concurrency)

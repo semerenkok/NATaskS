@@ -15,6 +15,10 @@ func ensureStream(js jetstream.JetStream, cfg config) error {
 	stream, err := js.Stream(ctx, cfg.streamName)
 	if err != nil {
 		if errors.Is(err, jetstream.ErrStreamNotFound) {
+			if !cfg.autoCreateStream {
+				return missingStreamError(cfg, err)
+			}
+
 			return createStream(ctx, js, cfg)
 		}
 
@@ -46,6 +50,10 @@ func streamConfig(cfg config) jetstream.StreamConfig {
 		Discard:           jetstream.DiscardOld,
 		AllowMsgSchedules: true,
 	}
+}
+
+func missingStreamError(cfg config, err error) error {
+	return fmt.Errorf("natasks: stream %q does not exist and auto-create is disabled: %w", cfg.streamName, err)
 }
 
 func createStream(ctx context.Context, js jetstream.JetStream, cfg config) error {
