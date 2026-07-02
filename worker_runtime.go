@@ -205,6 +205,10 @@ func (w *Worker) isRecoverableConnectionFetchError(err error) bool {
 		return false
 	}
 
+	if isTemporaryJetStreamError(err) {
+		return true
+	}
+
 	switch connectionStatus(w.jetStreamConn()) {
 	case nats.CONNECTING, nats.DISCONNECTED, nats.RECONNECTING:
 		return true
